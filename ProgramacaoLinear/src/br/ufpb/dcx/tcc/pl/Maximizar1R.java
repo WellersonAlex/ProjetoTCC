@@ -7,24 +7,39 @@ import javax.swing.JOptionPane;
 
 /**
  * 
- * Classe concreta para maximizar uma função obejetivo Z, com três restrição  
+ * Classe concreta para maximizar uma função obejetivo Z, com uma restrição  
  * 
  * @author Wellerson Alex
  *
  */
-
-public class Maximizar3R extends ProgramacaoLinear {
+public class Maximizar1R extends ProgramacaoLinear {
 	
 	/** Propriedade de contagem*/
 	private int cont;
-
+	
+	/** Propriedade que guarda os valores iniciais de Z */
+	private double[] guardarInicialZ;
+		
+	/** Propriedade que guarda os valores iniciais da restrição 1 */
+	private double[] guardarInicialR1;
+	
 	/**
 	 * Encotra a solução ótima para a função Z de forma recursiva.
 	 * 
 	 *@return Tabela inicial, tabelas atualizadas e solução ótima.
 	 */
-	public double[] max3R(double[] Z, double[] r1, double[] r2, double[] r3) {
+	public double[] max1R(double[] Z, double[] r1) {
+		
+		if (cont == 0) {
+			guardarInicialR1 = new double[r1.length];
+			guardarInicialZ = new double[Z.length];
 
+			guardarInicialR1 = r1;
+			guardarInicialZ = Z;
+		}
+
+		verificarLoopTableau(Z, r1, guardarInicialR1, guardarInicialZ);
+		
 		if (chegouNoOtimo(Z)) {
 			return Z;
 		}
@@ -35,30 +50,24 @@ public class Maximizar3R extends ProgramacaoLinear {
 			throw new IllegalArgumentException("Loop Tableau");
 		}
 
-		mostrarQuadroInicial(Z, r1, r2, r3);
+		mostrarQuadroInicial(Z, r1);
 
 		cont += 1;
 
 		int posicaoColuna = colunaMaiorValorPositivo(Z);
 
 		double valorRestritivo1 = linhaMaisRestrtitiva(r1, posicaoColuna - 1);
-		double valorRestritivo2 = linhaMaisRestrtitiva(r2, posicaoColuna - 1);
-		double valorRestritivo3 = linhaMaisRestrtitiva(r3, posicaoColuna - 1);
 
-		double[] valoresRestritivos = inserir(valorRestritivo1, valorRestritivo2, valorRestritivo3);
+		double[] valoresRestritivos = inserir(valorRestritivo1);
 		int posicaoLinha = linhaDoMenorValorRestritivoPositivo(valoresRestritivos);
-		double[] linhaFixa = linhaEscolhida(posicaoLinha, r1, r2, r3);
+		double[] linhaFixa = linhaEscolhida(posicaoLinha, r1);
 
 		double interseccao = linhaFixa[posicaoColuna - 1];
 
 		double valorZerarColuna1 = calcularValorEscalonamento(interseccao, r1[posicaoColuna - 1]);
-		double valorZerarColuna2 = calcularValorEscalonamento(interseccao, r2[posicaoColuna - 1]);
-		double valorZerarColuna3 = calcularValorEscalonamento(interseccao, r3[posicaoColuna - 1]);
 		double valorZerarColunaZ = calcularValorEscalonamento(interseccao, Z[posicaoColuna - 1]);
 
 		r1 = zerarColuna(linhaFixa, r1, valorZerarColuna1);
-		r2 = zerarColuna(linhaFixa, r2, valorZerarColuna2);
-		r3 = zerarColuna(linhaFixa, r3, valorZerarColuna3);
 		Z = zerarColuna(linhaFixa, Z, valorZerarColunaZ);
 
 		System.out.println();
@@ -73,17 +82,84 @@ public class Maximizar3R extends ProgramacaoLinear {
 		System.out.println();
 		System.out.println("Valores restritivos: " + Arrays.toString(valoresRestritivos));
 
-		System.out.println();
-		System.out.println("Tabela Resultante da " + cont + "ª Iteração:");
-		System.out.println(Arrays.toString(r1));
-		System.out.println(Arrays.toString(r2));
-		System.out.println(Arrays.toString(r3));
-		System.out.println(Arrays.toString(Z));
+		mostrarIteracao(Z, r1);
 
-		return max3R(Z, r1, r2, r3);
+		return max1R(Z, r1);
 
 	}
+	
+	/** Mostrar cada iteração */
+	private void mostrarIteracao(double[] Z, double[] r1) {
+		System.out.println();
+		System.out.println("Tabela Resultante da " + cont + "ª Iteração:");
+		double[] printR1 = formatarDecimaisUmaCasa(r1);
+		double[] printZ = formatarDecimaisUmaCasa(Z);
+		System.out.println(Arrays.toString(printR1));
+		System.out.println(Arrays.toString(printZ));
+	}
+	
+	/** Verifica se entrou em Loop */
+	private void verificarLoopTableau(double[] Z, double[] r1, double[] guardarInicialR1, double[] guardarInicialZ) {
+		if (cont > 0) {
 
+			boolean testeR1 = testeLoop(guardarInicialR1, r1);
+			boolean testeZ = testeLoop(guardarInicialZ, Z);
+
+			if (testeR1 && testeZ) {
+				JOptionPane.showMessageDialog(null, "O problema entrou em loop, não foi possível resolver",
+						"Loop Tableau", JOptionPane.ERROR_MESSAGE);
+				System.out.println();
+				System.out.println("Os valores são iguais nas duas tabelas, por isso o Loop é gerado");
+				System.out.println();
+				mostrarQuadroInicialLoop(Z, r1);
+				mostrarIteracao(Z, r1);
+				throw new IllegalArgumentException("Loop Tableau");
+			}
+		}
+	}
+	
+	/** Exibe tabela inicial quando há Loop */
+	private void mostrarQuadroInicialLoop(double[] Z, double[] r1) {
+		System.out.println("Tabela Inicial:");
+		r1 = formatarDecimaisUmaCasa(r1);
+		Z = formatarDecimaisUmaCasa(Z);
+		System.out.println(Arrays.toString(r1));
+		System.out.println(Arrays.toString(Z));
+		System.out.println();
+
+	}
+	
+	/** Testa se as tabelas são iguais */
+	private boolean testeLoop(double[] inicial, double[] r) {
+		double[] r1Formatado = formatarDecimaisUmaCasa(r);
+		double[] inicialFormatodo = formatarDecimaisUmaCasa(inicial);
+		int cont = 0;
+		for (int i = 0; i < r1Formatado.length; i++) {
+			if (inicialFormatodo[i] == r1Formatado[i]) {
+				cont += 1;
+			}
+		}
+		if (cont == r.length) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	/** Formatar para uma casa decimal */
+	private double[] formatarDecimaisUmaCasa(double[] vetor) {
+		double[] novo = new double[vetor.length];
+		DecimalFormat umaCasa = new DecimalFormat("0.0");
+		for (int i = 0; i < vetor.length; i++) {
+			String v = umaCasa.format(vetor[i]);
+			String[] part1 = v.split("[,]");
+			String v1 = part1[0] + "." + part1[1];
+			double valor1 = Double.parseDouble(v1);
+			novo[i] = valor1;
+		}
+		return novo;
+	}
+	
 	/** Verifica se a solução foi encontrada*/
 	public boolean chegouNoOtimo(double[] max) {
 		for (int i = 0; i < max.length; i++) {
@@ -93,18 +169,16 @@ public class Maximizar3R extends ProgramacaoLinear {
 		}
 		return true;
 	}
-
+	
 	/** Exibe tabela inicial*/
-	private void mostrarQuadroInicial(double[] Z, double[] r1, double[] r2, double[] r3) {
+	private void mostrarQuadroInicial(double[] Z, double[] r1) {
 		if (cont == 0) {
 			System.out.println("Tabela Inicial:");
 			System.out.println(Arrays.toString(r1));
-			System.out.println(Arrays.toString(r2));
-			System.out.println(Arrays.toString(r3));
 			System.out.println(Arrays.toString(Z));
 		}
 	}
-
+	
 	/** Escolhe a coluna da tabela*/
 	public int colunaMaiorValorPositivo(double[] v) {
 		double maior = Integer.MIN_VALUE;
@@ -139,24 +213,18 @@ public class Maximizar3R extends ProgramacaoLinear {
 		}
 	}
 
-	public double[] inserir(double valor1, double valor2, double valor3) {
-		
+	public double[] inserir(double valor1) {
+
 		double vo1 = formatarDecimais(valor1);
 
-		double vo2 = formatarDecimais(valor2);
-
-		double vo3 = formatarDecimais(valor3);
-
-		double[] v = new double[3];
+		double[] v = new double[1];
 		v[0] = vo1;
-		v[1] = vo2;
-		v[2] = vo3;
 
 		return v;
 	}
 	
 	private double formatarDecimais(double valor) {
-		DecimalFormat umaCasa = new DecimalFormat("0.00");
+		DecimalFormat umaCasa = new DecimalFormat("0.0000000000");
 		String v = umaCasa.format(valor);
 		String[] part1 = v.split("[,]");
 		String v1 = part1[0] + "." + part1[1];
@@ -179,16 +247,11 @@ public class Maximizar3R extends ProgramacaoLinear {
 		return linha;
 	}
 
-	public double[] linhaEscolhida(int linha, double[] r1, double[] r2, double[] r3) {
-		if (linha == 1) {
-			return r1;
-		} else if (linha == 2) {
-			return r2;
-		} else {
-			return r3;
-		}
-	}
+	public double[] linhaEscolhida(int linha, double[] r1) {
+		return r1;
 
+	}
+	
 	/** Definir valor para zerar coluna*/
 	private double calcularValorEscalonamento(double interseccao, double d) {
 
@@ -203,7 +266,7 @@ public class Maximizar3R extends ProgramacaoLinear {
 
 		return val1;
 	}
-
+	
 	/** Realiza escalonamento para atualização da tabela*/
 	public double[] zerarColuna(double[] vr, double[] vz, double valor) {
 		double[] novoV = new double[vz.length];
@@ -230,91 +293,90 @@ public class Maximizar3R extends ProgramacaoLinear {
 		for (int i = 0; i < vr.length; i++) {
 
 			double vIndice = ((vr[i] * valor) + vz[i]);
-			
+
 			double vo1 = formatarDecimais(vIndice);
 
 			novoV[i] = vo1;
 		}
 	}
-
+	
 	/** Recebe dados da tabela*/
 	public void entradaDados() {
 
-		Maximizar3R problema = new Maximizar3R();
+		Maximizar1R problema = new Maximizar1R();
+		int tamanho;
 		String aux;
 		int cont = 0;
-		
 
-		aux = JOptionPane.showInputDialog(null,
-				"Quantas variáveis o problema apresenta? (Inclua também as variáveis de folga e o termo independente b)");
-		int tamanho = Integer.parseInt(aux);
+		aux = JOptionPane.showInputDialog(null,"Quantas variáveis o problema apresenta? (Inclua também as variáveis de folga e o termo independente b)");
+		tamanho = Integer.parseInt(aux);
 
 		double[] Z = valoresDeZ(tamanho, cont);
 		double[] restricao1 = valoresR1(tamanho);
-		double[] restricao2 = valoresR2(tamanho);
-		double[] restricao3 = valoresR3(tamanho);
 
-		double[] maxZ = problema.max3R(Z, restricao1, restricao2, restricao3);
+		double[] maxZ = problema.max1R(Z, restricao1);
 		double solucaoOtima = maxZ[maxZ.length - 1] * -1;
 		System.out.println();
 		System.out.println("O valor da sólução ótima é: " + solucaoOtima);
 	}
-
+	
 	/** Recebe valores para a primeira restrição*/
 	private double[] valoresR1(int tamanho) {
-		int restricao = 1;
-		double[] restricao1 = adicionarVariaveis(tamanho, restricao);
-		return restricao1;
-	}
-
-	/** Recebe valores para a segunda restrição*/
-	private double[] valoresR2(int tamanho) {
-		int restricao = 2;
-		double[] restricao2 = adicionarVariaveis(tamanho, restricao);
-		return restricao2;
-	}
-	
-	/** Recebe valores para a terceira restrição*/
-	private double[] valoresR3(int tamanho) {
-		int restricao = 3;
-		double[] restricao3 = adicionarVariaveis(tamanho, restricao);
-		return restricao3;
-	}
-
-	/** Adiciona os valores*/
-	private double[] adicionarVariaveis(int tamanho, int restri) {
+		int posicao = 0;
 		String aux;
 		int cont = 0;
-		double[] restricao = new double[tamanho];
+		double[] restricao1 = new double[tamanho];
 		for (int i = 0; i < tamanho; i++) {
 			cont += 1;
 			if (cont == tamanho) {
-				aux = JOptionPane.showInputDialog(null,"Para a restrição "+ restri + ", digite o valor do termo independente b"+restri);
-				restricao[i] = Double.parseDouble(aux);
+				aux = JOptionPane.showInputDialog(null,"Para a restrição 1", "digite o valor do termo independente b1");
+				posicao = posicaoBarra(aux, posicao);
+				verificarFracao(aux, posicao, restricao1, i);
 			} else {
-				aux = JOptionPane.showInputDialog(null, "Para a restrição "+ restri+", digite o valor de X" + cont);
-				restricao[i] = Double.parseDouble(aux);
+				aux = JOptionPane.showInputDialog(null, "Para a restrição 1, digite o valor de X" + cont);
+				posicao = posicaoBarra(aux, posicao);
+				verificarFracao(aux, posicao, restricao1, i);
 			}
 		}
-		return restricao;
+		return restricao1;
 	}
 
 	/** Recebe dados da função objetivo Z*/
 	private double[] valoresDeZ(int tamanho, int cont) {
+		int posicao = 0;
 		String aux;
 		double[] Z = new double[tamanho];
 		for (int i = 0; i < tamanho; i++) {
 			cont += 1;
 			if (cont == tamanho) {
 				aux = JOptionPane.showInputDialog(null, "Para a função Z, digite o valor do termo independente");
-				Z[i] = Double.parseDouble(aux);
+				posicao = posicaoBarra(aux, posicao);
+				verificarFracao(aux, posicao, Z, i);
 			} else {
 				aux = JOptionPane.showInputDialog(null, "Para a função Z, digite o valor de X" + cont);
-				Z[i] = Double.parseDouble(aux);
+				posicao = posicaoBarra(aux, posicao);
+				verificarFracao(aux, posicao, Z, i);
 
 			}
 		}
 		return Z;
+	}
+	
+	/** Trata caso com valor fracionário */
+	private int posicaoBarra(String aux, int posicao) {
+		posicao = aux.indexOf("/");
+		return posicao;
+	}
+
+	/** Realiza operações com fração */
+	private void verificarFracao(String aux, int posicao, double[] Z, int i) {
+		if (posicao > 0) {
+			double numerador = Double.parseDouble(aux.substring(0, posicao));
+			double denominador = Double.parseDouble(aux.substring(posicao + 1, aux.length()));
+			Z[i] = (numerador / denominador);
+		} else {
+			Z[i] = Double.parseDouble(aux);
+		}
 	}
 
 }

@@ -7,34 +7,60 @@ import javax.swing.JOptionPane;
 
 /**
  * 
- * Classe concreta para maximizar uma função obejetivo Z, com duas restrição  
+ * Classe concreta para maximizar uma função obejetivo Z, com quatro restrição  
  * 
  * @author Wellerson Alex
  *
  */
-
-public class Maximizar2R extends ProgramacaoLinear {
+public class Maximizar4R extends ProgramacaoLinear {
 	
 	/** Propriedade de contagem*/
 	private int cont;
+	
+	/** Propriedade que guarda os valores iniciais de Z */
+	private double[] guardarInicialZ;
+		
+	/** Propriedade que guarda os valores iniciais da restrição 1 */
+	private double[] guardarInicialR1;
+
+	/** Propriedade que guarda os valores iniciais da restrição 2 */
+	private double[] guardarInicialR2;
+	
+	/** Propriedade que guarda os valores iniciais da restrição 3 */
+	private double[] guardarInicialR3;
+	
+	/** Propriedade que guarda os valores iniciais da restrição 4 */
+	private double[] guardarInicialR4;
 
 	/**
 	 * Encotra a solução ótima para a função Z de forma recursiva.
 	 * 
 	 *@return Tabela inicial, tabelas atualizadas e solução ótima.
 	 */
-	public double[] max2R(double[] Z, double[] r1, double[] r2) {
+	public double[] max4R(double[] Z, double[] r1, double[] r2, double[] r3, double[] r4) {
+		
+		if (cont == 0) {
+			guardarInicialR1 = new double[r1.length];
+			guardarInicialR2 = new double[r2.length];
+			guardarInicialR3 = new double[r3.length];
+			guardarInicialR4 = new double[r4.length];
+			guardarInicialZ = new double[Z.length];
+
+			guardarInicialR1 = r1;
+			guardarInicialR2 = r2;
+			guardarInicialR3 = r3;
+			guardarInicialR4 = r4;
+			guardarInicialZ = Z;
+		}
+
+		verificarLoopTableau(Z, r1, r2, r3, r4, guardarInicialR1, guardarInicialR2,guardarInicialR3,
+				guardarInicialR4, guardarInicialZ);
 
 		if (chegouNoOtimo(Z)) {
 			return Z;
 		}
-		
-		if(cont > 100) {
-			JOptionPane.showMessageDialog(null, "O problema entrou em loop, não foi possível resolver", "Loop Tableau", JOptionPane.ERROR_MESSAGE);
-			throw new IllegalArgumentException("Loop Tableau");
-		}
 
-		mostrarQuadroInicial(Z, r1, r2);
+		mostrarQuadroInicial(Z, r1, r2, r3, r4);
 
 		cont += 1;
 
@@ -42,25 +68,31 @@ public class Maximizar2R extends ProgramacaoLinear {
 
 		double valorRestritivo1 = linhaMaisRestrtitiva(r1, posicaoColuna - 1);
 		double valorRestritivo2 = linhaMaisRestrtitiva(r2, posicaoColuna - 1);
+		double valorRestritivo3 = linhaMaisRestrtitiva(r3, posicaoColuna - 1);
+		double valorRestritivo4 = linhaMaisRestrtitiva(r4, posicaoColuna - 1);
+		
 
-		double[] valoresRestritivos = inserir(valorRestritivo1, valorRestritivo2);
+		double[] valoresRestritivos = inserir(valorRestritivo1, valorRestritivo2, valorRestritivo3, valorRestritivo4);
 		int posicaoLinha = linhaDoMenorValorRestritivoPositivo(valoresRestritivos);
-
-		double[] linhaFixa = linhaEscolhida(posicaoLinha, r1, r2);
+		double[] linhaFixa = linhaEscolhida(posicaoLinha, r1, r2, r3, r4);
 
 		double interseccao = linhaFixa[posicaoColuna - 1];
 
 		double valorZerarColuna1 = calcularValorEscalonamento(interseccao, r1[posicaoColuna - 1]);
 		double valorZerarColuna2 = calcularValorEscalonamento(interseccao, r2[posicaoColuna - 1]);
+		double valorZerarColuna3 = calcularValorEscalonamento(interseccao, r3[posicaoColuna - 1]);
+		double valorZerarColuna4 = calcularValorEscalonamento(interseccao, r4[posicaoColuna - 1]);
 		double valorZerarColunaZ = calcularValorEscalonamento(interseccao, Z[posicaoColuna - 1]);
 
 		r1 = zerarColuna(linhaFixa, r1, valorZerarColuna1);
 		r2 = zerarColuna(linhaFixa, r2, valorZerarColuna2);
+		r3 = zerarColuna(linhaFixa, r3, valorZerarColuna3);
+		r4 = zerarColuna(linhaFixa, r4, valorZerarColuna4);
 		Z = zerarColuna(linhaFixa, Z, valorZerarColunaZ);
 
 		System.out.println();
 		System.out.println("A coluna escolhida foi: " + posicaoColuna);
-
+		
 		if(posicaoLinha == 0) {
 			JOptionPane.showMessageDialog(null, "O problema é ilimitado ou não tem solução", "Ilimitado ou Sem solução", JOptionPane.ERROR_MESSAGE);
 			throw new IllegalArgumentException("Problema Ilimitado ou Sem solução");
@@ -70,14 +102,94 @@ public class Maximizar2R extends ProgramacaoLinear {
 		System.out.println();
 		System.out.println("Valores restritivos: " + Arrays.toString(valoresRestritivos));
 
+		mostrarIteracao(Z, r1, r2, r3, r4);
+
+		return max4R(Z, r1, r2, r3, r4);
+
+	}
+	
+	/** Verifica se entrou em Loop */
+	private void verificarLoopTableau(double[] Z, double[] r1, double[] r2, double[] r3, double[] r4, double[] guardarInicialR1,
+			double[] guardarInicialR2, double[] guardarInicialR3, double[] guardarInicialR4, double[] guardarInicialZ) {
+		
+		if (cont > 0) {
+
+			boolean testeR1 = testeLoop(guardarInicialR1, r1);
+			boolean testeR2 = testeLoop(guardarInicialR2, r2);
+			boolean testeR3 = testeLoop(guardarInicialR2, r3);
+			boolean testeR4 = testeLoop(guardarInicialR2, r4);
+			boolean testeZ = testeLoop(guardarInicialZ, Z);
+
+			if (testeR1 && testeR2 && testeR3 && testeR4 && testeZ) {
+				JOptionPane.showMessageDialog(null, "O problema entrou em loop, não foi possível resolver",
+						"Loop Tableau", JOptionPane.ERROR_MESSAGE);
+				System.out.println();
+				System.out.println("Os valores são iguais nas duas tabelas, por isso o Loop é gerado");
+				System.out.println();
+				mostrarQuadroInicialLoop(Z, r1, r2, r3, r4);
+				mostrarIteracao(Z, r1, r2, r3, r4);
+				throw new IllegalArgumentException("Loop Tableau");
+			}
+		}
+	}
+	
+	/** Exibe tabela inicial quando há Loop */
+	private void mostrarQuadroInicialLoop(double[] Z, double[] r1, double[] r2, double[] r3, double[] r4) {
+		System.out.println("Tabela Inicial:");
+		r1 = formatarDecimaisUmaCasa(r1);
+		r2 = formatarDecimaisUmaCasa(r2);
+		r3 = formatarDecimaisUmaCasa(r3);
+		r4 = formatarDecimaisUmaCasa(r4);
+		Z = formatarDecimaisUmaCasa(Z);
+		System.out.println(Arrays.toString(r1));
+		System.out.println(Arrays.toString(r2));
+		System.out.println(Arrays.toString(r3));
+		System.out.println(Arrays.toString(r4));
+		System.out.println(Arrays.toString(Z));
+		System.out.println();
+
+	}
+	
+	/** Testa se as tabelas são iguais */
+	private boolean testeLoop(double[] inicial, double[] r) {
+		double[] r1Formatado = formatarDecimaisUmaCasa(r);
+		double[] inicialFormatodo = formatarDecimaisUmaCasa(inicial);
+		int cont = 0;
+		for (int i = 0; i < r1Formatado.length; i++) {
+			if (inicialFormatodo[i] == r1Formatado[i]) {
+				cont += 1;
+			}
+		}
+		if (cont == r.length) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	/** Mostrar cada iteração */
+	private void mostrarIteracao(double[] Z, double[] r1, double[] r2, double[] r3, double[] r4) {
 		System.out.println();
 		System.out.println("Tabela Resultante da " + cont + "ª Iteração:");
 		System.out.println(Arrays.toString(r1));
 		System.out.println(Arrays.toString(r2));
+		System.out.println(Arrays.toString(r3));
+		System.out.println(Arrays.toString(r4));
 		System.out.println(Arrays.toString(Z));
-
-		return max2R(Z, r1, r2);
-
+	}
+	
+	/** Formatar para uma casa decimal */
+	private double[] formatarDecimaisUmaCasa(double[] vetor) {
+		double[] novo = new double[vetor.length];
+		DecimalFormat umaCasa = new DecimalFormat("0.0");
+		for (int i = 0; i < vetor.length; i++) {
+			String v = umaCasa.format(vetor[i]);
+			String[] part1 = v.split("[,]");
+			String v1 = part1[0] + "." + part1[1];
+			double valor1 = Double.parseDouble(v1);
+			novo[i] = valor1;
+		}
+		return novo;
 	}
 
 	/** Verifica se a solução foi encontrada*/
@@ -91,11 +203,13 @@ public class Maximizar2R extends ProgramacaoLinear {
 	}
 
 	/** Exibe tabela inicial*/
-	private void mostrarQuadroInicial(double[] Z, double[] r1, double[] r2) {
+	private void mostrarQuadroInicial(double[] Z, double[] r1, double[] r2, double[] r3, double[] r4) {
 		if (cont == 0) {
 			System.out.println("Tabela Inicial:");
 			System.out.println(Arrays.toString(r1));
 			System.out.println(Arrays.toString(r2));
+			System.out.println(Arrays.toString(r3));
+			System.out.println(Arrays.toString(r4));
 			System.out.println(Arrays.toString(Z));
 		}
 	}
@@ -134,28 +248,33 @@ public class Maximizar2R extends ProgramacaoLinear {
 		}
 	}
 
-	public double[] inserir(double valor1, double valor2) {
+	public double[] inserir(double valor1, double valor2, double valor3, double valor4) {
 
 		double vo1 = formatarDecimais(valor1);
 
 		double vo2 = formatarDecimais(valor2);
 
-		double[] v = new double[2];
+		double vo3 = formatarDecimais(valor3);
+
+		double vo4 = formatarDecimais(valor4);
+
+		double[] v = new double[4];
 		v[0] = vo1;
 		v[1] = vo2;
+		v[2] = vo3;
+		v[3] = vo4;
 
 		return v;
 	}
 	
 	private double formatarDecimais(double valor) {
-		DecimalFormat umaCasa = new DecimalFormat("0.00");
+		DecimalFormat umaCasa = new DecimalFormat("0.0000000000");
 		String v = umaCasa.format(valor);
 		String[] part1 = v.split("[,]");
 		String v1 = part1[0] + "." + part1[1];
 		double valor1 = Double.parseDouble(v1);
 		return valor1;
 	}
-
 
 	public int linhaDoMenorValorRestritivoPositivo(double[] v) {
 		double menor = Integer.MAX_VALUE;
@@ -171,11 +290,15 @@ public class Maximizar2R extends ProgramacaoLinear {
 		return linha;
 	}
 
-	public double[] linhaEscolhida(int linha, double[] r1, double[] r2) {
+	public double[] linhaEscolhida(int linha, double[] r1, double[] r2, double[] r3, double[] r4) {
 		if (linha == 1) {
 			return r1;
-		} else {
+		} else if (linha == 2) {
 			return r2;
+		} else if (linha == 3){
+			return r3;
+		}else {
+			return r4;
 		}
 	}
 
@@ -230,7 +353,7 @@ public class Maximizar2R extends ProgramacaoLinear {
 	/** Recebe dados da tabela*/
 	public void entradaDados() {
 
-		Maximizar2R problema = new Maximizar2R();
+		Maximizar4R problema = new Maximizar4R();
 		int tamanho;
 		String aux;
 		int cont = 0;
@@ -241,13 +364,15 @@ public class Maximizar2R extends ProgramacaoLinear {
 	    double[] Z = valoresDeZ(tamanho, cont);
 	    double[] restricao1 = valoresR1(tamanho);
 	    double[] restricao2 = valoresR2(tamanho);
+	    double[] restricao3 = valoresR3(tamanho);
+	    double[] restricao4 = valoresR4(tamanho);
 
-		double[] maxZ = problema.max2R(Z, restricao1, restricao2);
+		double[] maxZ = problema.max4R(Z, restricao1, restricao2, restricao3, restricao4);
 		double solucaoOtima = maxZ[maxZ.length - 1] * -1;
 		System.out.println();
 		System.out.println("O valor da sólução ótima é: " + solucaoOtima);
 	}
-	
+
 	/** Recebe valores para a primeira restrição*/
 	private double[] valoresR1(int tamanho) {
 		int restricao = 1;
@@ -261,7 +386,21 @@ public class Maximizar2R extends ProgramacaoLinear {
 		double[] restricao2 = adicionarVariaveis(tamanho, restricao);
 		return restricao2;
 	}
-	
+
+	/** Recebe valores para a terceira restrição*/
+	private double[] valoresR3(int tamanho) {
+		int restricao = 3;
+		double[] restricao3 = adicionarVariaveis(tamanho, restricao);
+		return restricao3;
+	}
+
+	/** Recebe valores para a quarta restrição*/
+	private double[] valoresR4(int tamanho) {
+		int restricao = 4;
+		double[] restricao4 = adicionarVariaveis(tamanho, restricao);
+		return restricao4;
+	}
+
 	/** Adiciona os valores*/
 	private double[] adicionarVariaveis(int tamanho, int restri) {
 		String aux;
@@ -273,7 +412,7 @@ public class Maximizar2R extends ProgramacaoLinear {
 				aux = JOptionPane.showInputDialog(null,"Para a restrição " + restri + ", digite o valor do termo independente b"+restri);
 				restricao[i] = Double.parseDouble(aux);
 			} else {
-				aux = JOptionPane.showInputDialog(null, "Para a restrição " + restri + ", digite o valor de X" + cont);
+				aux = JOptionPane.showInputDialog(null, "Para a restrição" + restri + ", digite o valor de X" + cont);
 				restricao[i] = Double.parseDouble(aux);
 			}
 		}
@@ -297,4 +436,5 @@ public class Maximizar2R extends ProgramacaoLinear {
 		}
 		return Z;
 	}
+
 }
