@@ -76,9 +76,8 @@ public class Maximizar2R extends ProgramacaoLinear {
 		System.out.println();
 		System.out.println("A coluna escolhida foi: " + posicaoColuna);
 
-		if (posicaoLinha == 0) {
-			JOptionPane.showMessageDialog(null, "O problema é ilimitado ou não tem solução", "Ilimitado ou Sem solução",
-					JOptionPane.ERROR_MESSAGE);
+		if(posicaoLinha == 0) {
+			JOptionPane.showMessageDialog(null, "O problema é ilimitado", "Ilimitado ou Sem solução", JOptionPane.ERROR_MESSAGE);
 			throw new IllegalArgumentException("Problema Ilimitado ou Sem solução");
 		}
 

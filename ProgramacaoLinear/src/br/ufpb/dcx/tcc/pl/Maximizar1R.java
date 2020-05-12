@@ -44,12 +44,6 @@ public class Maximizar1R extends ProgramacaoLinear {
 			return Z;
 		}
 		
-
-		if(cont > 100) {
-			JOptionPane.showMessageDialog(null, "O problema entrou em loop, não foi possível resolver", "Loop Tableau", JOptionPane.ERROR_MESSAGE);
-			throw new IllegalArgumentException("Loop Tableau");
-		}
-
 		mostrarQuadroInicial(Z, r1);
 
 		cont += 1;
@@ -74,7 +68,7 @@ public class Maximizar1R extends ProgramacaoLinear {
 		System.out.println("A coluna escolhida foi: " + posicaoColuna);
 		
 		if(posicaoLinha == 0) {
-			JOptionPane.showMessageDialog(null, "O problema é ilimitado ou não tem solução", "Ilimitado ou Sem solução", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(null, "O problema é ilimitado", "Ilimitado ou Sem solução", JOptionPane.ERROR_MESSAGE);
 			throw new IllegalArgumentException("Problema Ilimitado ou Sem solução");
 		}
 		
