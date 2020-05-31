@@ -94,8 +94,8 @@ public class Maximizar4R extends ProgramacaoLinear {
 		System.out.println("A coluna escolhida foi: " + posicaoColuna);
 		
 		if(posicaoLinha == 0) {
-			JOptionPane.showMessageDialog(null, "O problema é ilimitado", "Ilimitado ou Sem solução", JOptionPane.ERROR_MESSAGE);
-			throw new IllegalArgumentException("Problema Ilimitado ou Sem solução");
+			JOptionPane.showMessageDialog(null, "O problema é ilimitado", "Ilimitado", JOptionPane.ERROR_MESSAGE);
+			throw new IllegalArgumentException("Problema Ilimitado");
 		}
 		
 		System.out.println("A linha escolhida foi: " + posicaoLinha);
